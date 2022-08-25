@@ -24,7 +24,7 @@ select longitude, latitude, accident_index, accident_severity,
 	case accident.accident_severity
         when '1' then 'Fatal'
         when '2' then 'Serious'
-		when '3' then 'Slight'
+	when '3' then 'Slight'
 	end as Severity
 from sql.dbo.accident;
 ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -37,12 +37,12 @@ select
 	count(*) as num_accidents, 
 	vehicle.sex_of_driver,
 	case vehicle.sex_of_driver
-        when '1' then 'Male'
-        when '2' then 'Female'
+        	when '1' then 'Male'
+        	when '2' then 'Female'
 	end as Sex,
 	case accident.accident_severity
-        when '1' then 'Fatal'
-        when '2' then 'Serious'
+        	when '1' then 'Fatal'
+        	when '2' then 'Serious'
 		when '3' then 'Slight'
 	end as Severity
 from SQL.dbo.accident as accident 
@@ -60,12 +60,12 @@ select
     sex_of_driver,
     accident_severity,
 	case vehicle.sex_of_driver
-        when '1' then 'Male'
-        when '2' then 'Female'
+        	when '1' then 'Male'
+        	when '2' then 'Female'
 	end as Sex,
 	case accident.accident_severity
-        when '1' then 'Fatal'
-        when '2' then 'Serious'
+        	when '1' then 'Fatal'
+        	when '2' then 'Serious'
 		when '3' then 'Slight'
 	end as Severity,
     count(*) as Total,
@@ -90,14 +90,14 @@ select
 	weather_conditions, 
 	count(*) as 'weather_count',
 	case accident.weather_conditions
-        when '1' then 'Fine, no high winds'
-        when '2' then 'Rain, no high winds'
+        	when '1' then 'Fine, no high winds'
+        	when '2' then 'Rain, no high winds'
 		when '3' then 'Snow, no high winds'
 		when '4' then 'Fine, high winds'
-        when '5' then 'Rain, high winds'
+        	when '5' then 'Rain, high winds'
 		when '6' then 'Snow, high winds'
 		when '7' then 'Fog or mist'
-        when '8' then 'Other'
+        	when '8' then 'Other'
 		--when '9' then 'Unknown'
 		else 'Unknown'
 	end as Weather
@@ -118,11 +118,11 @@ select
 	day_of_week, 
 	count(*) as accidents_per_day,
 	case accident.day_of_week
-        when '1' then 'Sunday'
-        when '2' then 'Monday'
+        	when '1' then 'Sunday'
+        	when '2' then 'Monday'
 		when '3' then 'Tuesday'
 		when '4' then 'Wednesday'
-        when '5' then 'Thursday'
+        	when '5' then 'Thursday'
 		when '6' then 'Friday'
 		when '7' then 'Saturday'
     end as Day
@@ -143,15 +143,15 @@ set accident_hour = substring(time, 1, charindex(':', time) -1);
 -- Accident frequency per hour 
 
 with 
-	accidents_time as (select accident_hour, 
-							  count(accident_hour) as accidents_per_hour, 
-							  case accident_severity
-								when '1' then 'Fatal'
-								when '2' then 'Serious'
-								when '3' then 'Slight'
-							  end as Severity,
-							  accident_severity, 
-							  sum(count(accident_hour)) over (partition by accident_severity) as total_per_severity
+	accidents_time as (select 	accident_hour, 
+					count(accident_hour) as accidents_per_hour, 
+					case accident_severity
+						when '1' then 'Fatal'
+						when '2' then 'Serious'
+						when '3' then 'Slight'
+					end as Severity,
+					accident_severity, 
+					sum(count(accident_hour)) over (partition by accident_severity) as total_per_severity
 from sql.dbo.accident
 group by 
 	accident_hour, 
