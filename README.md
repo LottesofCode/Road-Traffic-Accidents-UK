@@ -6,12 +6,12 @@ A look into the effect of day, time, year and gender on the severity of road acc
 
 ## Method
 
-Sorted and analyed data using MS SQL Server
-
+Sorted and analyed data using MS SQL Server.  
+Code can be viewed [here](https://github.com/LottesofCode/Road-Traffic-Accidents-UK/blob/main/SQLCarAccidents.sql)
 
 ## Results
 
-dssgs
+[Tableau dashboard](https://public.tableau.com/views/UKRoadTrafficAccidentsSeverity2016-2020/Dashboard1?:language=en-US&publish=yes&:display_count=n&:origin=viz_share_link)
 
 ## Data
 
