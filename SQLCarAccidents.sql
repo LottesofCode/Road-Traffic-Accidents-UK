@@ -20,296 +20,266 @@ update sql.dbo.accident
 set longitude = replace(longitude, ',', '.');
 
 
-select longitude, latitude, accident_index, accident_severity,
-	case accident.accident_severity
-        when '1' then 'Fatal'
-        when '2' then 'Serious'
-		when '3' then 'Slight'
-	end as Severity
+select longitude,
+       latitude,
+       accident_index,
+       accident_severity,
+       case accident.accident_severity
+           when '1' then 'Fatal'
+           when '2' then 'Serious'
+           when '3' then 'Slight'
+           end as Severity
 from sql.dbo.accident;
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 --Number of accidents per severity and sex
 
-select 
-	accident.accident_severity, 
-	count(*) as num_accidents, 
-	vehicle.sex_of_driver,
-	case vehicle.sex_of_driver
-        when '1' then 'Male'
-        when '2' then 'Female'
-	end as Sex,
-	case accident.accident_severity
-        when '1' then 'Fatal'
-        when '2' then 'Serious'
-		when '3' then 'Slight'
-	end as Severity
-from SQL.dbo.accident as accident 
-	inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-where 
-	sex_of_driver != 3 and sex_of_driver != -1 
-group by 
-	accident.accident_severity, vehicle.sex_of_driver
-order by 
-	accident.accident_severity;
+select accident.accident_severity,
+       count(*) as num_accidents,
+       vehicle.sex_of_driver,
+       case vehicle.sex_of_driver
+           when '1' then 'Male'
+           when '2' then 'Female'
+           end  as Sex,
+       case accident.accident_severity
+           when '1' then 'Fatal'
+           when '2' then 'Serious'
+           when '3' then 'Slight'
+           end  as Severity
+from SQL.dbo.accident as accident
+         inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+where sex_of_driver != 3
+  and sex_of_driver != -1
+group by accident.accident_severity, vehicle.sex_of_driver
+order by accident.accident_severity;
 
 --Percentage accident severities/sex
 
-select
-    sex_of_driver,
-    accident_severity,
-	case vehicle.sex_of_driver
-        when '1' then 'Male'
-        when '2' then 'Female'
-	end as Sex,
-	case accident.accident_severity
-        when '1' then 'Fatal'
-        when '2' then 'Serious'
-		when '3' then 'Slight'
-	end as Severity,
-    count(*) as Total,
-    count(*) * 100.0 / sum(count(*)) over (partition by sex_of_driver) as PercentOfSex,
-    count(*) * 100.0 / sum(count(*)) over () as PercentOfTotal
-from
-    sql.dbo.accident as accident
-    inner join sql.dbo.vehicle as vehicle on
-        accident.accident_index = vehicle.accident_index
-where 
-	sex_of_driver != 3 and sex_of_driver != -1 
-group by
-    sex_of_driver,
-    accident_severity
-order by
-	Total desc;
+select sex_of_driver,
+       accident_severity,
+       case vehicle.sex_of_driver
+           when '1' then 'Male'
+           when '2' then 'Female'
+           end                                                            as Sex,
+       case accident.accident_severity
+           when '1' then 'Fatal'
+           when '2' then 'Serious'
+           when '3' then 'Slight'
+           end                                                            as Severity,
+       count(*)                                                           as Total,
+       count(*) * 100.0 / sum(count(*)) over (partition by sex_of_driver) as PercentOfSex,
+       count(*) * 100.0 / sum(count(*)) over ()                           as PercentOfTotal
+from sql.dbo.accident as accident
+         inner join sql.dbo.vehicle as vehicle on
+    accident.accident_index = vehicle.accident_index
+where sex_of_driver != 3
+  and sex_of_driver != -1
+group by sex_of_driver,
+         accident_severity
+order by Total desc;
 
 -- Percent accident severities per sex (different method)
 
-select 
-cast(male_slight as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_slight_percent, 
-cast(male_severe as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_severe_percent,
-cast(male_fatal as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_fatal_percent, 
-cast(female_slight as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_slight_percent,
-cast(female_severe as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_severe_percent,
-cast(female_fatal as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_fatal_percent
+select cast(male_slight as float) /
+       (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) *
+       100 as male_slight_percent,
+       cast(male_severe as float) /
+       (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) *
+       100 as male_severe_percent,
+       cast(male_fatal as float) /
+       (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) *
+       100 as male_fatal_percent,
+       cast(female_slight as float) /
+       (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) *
+       100 as female_slight_percent,
+       cast(female_severe as float) /
+       (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) *
+       100 as female_severe_percent,
+       cast(female_fatal as float) /
+       (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) *
+       100 as female_fatal_percent
 
-from (
-	select 
-	 (
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 1 and accident_severity = 2
-	) as male_severe,
-
-	
-	(
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 1 and accident_severity = 1
-	) as male_fatal,
-
-
-	(
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 1 and accident_severity = 3
-	) as male_slight,
-
-	(
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 2 and accident_severity = 2
-	) as female_severe,
-
-	
-	(
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 2 and accident_severity = 1
-	) as female_fatal,
+from (select (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 1
+                and accident_severity = 2) as male_severe,
 
 
-	(
-		select count(*)
-		from SQL.dbo.accident as accident
-			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
-		where sex_of_driver = 2 and accident_severity = 3
-	) as female_slight
-) as percentage_calculations
+             (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 1
+                and accident_severity = 1) as male_fatal,
+
+
+             (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 1
+                and accident_severity = 3) as male_slight,
+
+             (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 2
+                and accident_severity = 2) as female_severe,
+
+
+             (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 2
+                and accident_severity = 1) as female_fatal,
+
+
+             (select count(*)
+              from SQL.dbo.accident as accident
+                       inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
+              where sex_of_driver = 2
+                and accident_severity = 3) as female_slight) as percentage_calculations
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 --Weather conditions
 
-select 
-	weather_conditions, 
-	count(*) as 'weather_count',
-	case accident.weather_conditions
-        when '1' then 'Fine, no high winds'
-        when '2' then 'Rain, no high winds'
-		when '3' then 'Snow, no high winds'
-		when '4' then 'Fine, high winds'
-        when '5' then 'Rain, high winds'
-		when '6' then 'Snow, high winds'
-		when '7' then 'Fog or mist'
-        when '8' then 'Other'
-		--when '9' then 'Unknown'
-		else 'Unknown'
-	end as Weather
+select weather_conditions,
+       count(*) as 'weather_count',
+       case accident.weather_conditions
+           when '1' then 'Fine, no high winds'
+           when '2' then 'Rain, no high winds'
+           when '3' then 'Snow, no high winds'
+           when '4' then 'Fine, high winds'
+           when '5' then 'Rain, high winds'
+           when '6' then 'Snow, high winds'
+           when '7' then 'Fog or mist'
+           when '8' then 'Other'
+           --when '9' then 'Unknown'
+           else 'Unknown'
+           end  as Weather
 from sql.dbo.accident
-where 
-	weather_conditions != -1
-group by 
-	weather_conditions
-order by 
-	weather_count desc;
+where weather_conditions != -1
+group by weather_conditions
+order by weather_count desc;
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 --Date and time
 
 --Days of the week
 
-select 
-	day_of_week, 
-	count(*) as accidents_per_day,
-	case accident.day_of_week
-        when '1' then 'Sunday'
-        when '2' then 'Monday'
-		when '3' then 'Tuesday'
-		when '4' then 'Wednesday'
-        when '5' then 'Thursday'
-		when '6' then 'Friday'
-		when '7' then 'Saturday'
-    end as Day
+select day_of_week,
+       count(*) as accidents_per_day,
+       case accident.day_of_week
+           when '1' then 'Sunday'
+           when '2' then 'Monday'
+           when '3' then 'Tuesday'
+           when '4' then 'Wednesday'
+           when '5' then 'Thursday'
+           when '6' then 'Friday'
+           when '7' then 'Saturday'
+           end  as Day
 from sql.dbo.accident
-group by 
-	day_of_week
-order by 
-	accidents_per_day desc;
+group by day_of_week
+order by accidents_per_day desc;
 
 -- Accident timing
 
 alter table sql.dbo.accident
-add accident_hour nvarchar (255);
+    add accident_hour nvarchar(255);
 
 update sql.dbo.accident
-set accident_hour = substring(time, 1, charindex(':', time) -1);
+set accident_hour = substring(time, 1, charindex(':', time) - 1);
 
 -- Accident frequency per hour 
 
-with 
-	accidents_time as (select accident_hour, 
-							  count(accident_hour) as accidents_per_hour, 
-							  case accident_severity
-								when '1' then 'Fatal'
-								when '2' then 'Serious'
-								when '3' then 'Slight'
-							  end as Severity,
-							  accident_severity, 
-							  sum(count(accident_hour)) over (partition by accident_severity) as total_per_severity
-from sql.dbo.accident
-group by 
-	accident_hour, 
-	accident_severity)
-select *, 
-	cast(accidents_per_hour as float)/ cast(total_per_severity as float) *100 as percentage_severity
-from 
-	accidents_time;
+with accidents_time as (select accident_hour,
+                               count(accident_hour)                                            as accidents_per_hour,
+                               case accident_severity
+                                   when '1' then 'Fatal'
+                                   when '2' then 'Serious'
+                                   when '3' then 'Slight'
+                                   end                                                         as Severity,
+                               accident_severity,
+                               sum(count(accident_hour)) over (partition by accident_severity) as total_per_severity
+                        from sql.dbo.accident
+                        group by accident_hour,
+                                 accident_severity)
+select *,
+       cast(accidents_per_hour as float) / cast(total_per_severity as float) * 100 as percentage_severity
+from accidents_time;
 
 -- Altering table to extract accident month
 
 alter table sql.dbo.accident
-add accident_date date;
+    add accident_date date;
 
 alter table sql.dbo.accident
-add accident_month varchar(255);
+    add accident_month varchar(255);
 
 update sql.dbo.accident
-set accident_date = CONVERT(date, date ,103); 
+set accident_date = CONVERT(date, date, 103);
 
 update sql.dbo.accident
 set accident_month = month(accident_date);
 
 --Accidents per month
 
-select 
-	count(*), 
-	accident_month, 
-	accident_hour
+select count(*),
+       accident_month,
+       accident_hour
 from sql.dbo.accident as accident
-    inner join sql.dbo.vehicle as vehicle on
-        accident.accident_index = vehicle.accident_index
-group by 
-	accident_month, accident_hour
-order by 
-	accident_month desc;
+         inner join sql.dbo.vehicle as vehicle on
+    accident.accident_index = vehicle.accident_index
+group by accident_month, accident_hour
+order by accident_month desc;
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 --Speed limit
 
-select 
-	speed_limit, 
-	count(*) 
+select speed_limit,
+       count(*)
 from sql.dbo.accident
-where 
-	speed_limit != -1 and speed_limit != 'NULL'
-group by 
-	speed_limit
-order by 
-	count(*) desc
+where speed_limit != -1
+  and speed_limit != 'NULL'
+group by speed_limit
+order by count(*) desc
 
 --Speed limit and accident severity
 
-select 
-	speed_limit, 
-	accident_severity,
-	count(*) as Total,
-    count(*) * 100.0 / sum(count(*)) over (partition by speed_limit) as PercentOfAccidents,
-    count(*) * 100.0 / sum(count(*)) over () as PercentOfTotal
+select speed_limit,
+       accident_severity,
+       count(*)                                                         as Total,
+       count(*) * 100.0 / sum(count(*)) over (partition by speed_limit) as PercentOfAccidents,
+       count(*) * 100.0 / sum(count(*)) over ()                         as PercentOfTotal
 from sql.dbo.accident
-where 
-	speed_limit != -1 and speed_limit != 'NULL'
-group by 
-	speed_limit, accident_severity
-order by 
-	count(*) desc
+where speed_limit != -1
+  and speed_limit != 'NULL'
+group by speed_limit, accident_severity
+order by count(*) desc
 
 -- Road type 
 
-select
-	road_type, 
-	count(*) 
+select road_type,
+       count(*)
 from sql.dbo.accident
-group by 
-	road_type
-order by 
-	count(*) desc
+group by road_type
+order by count(*) desc
 
 -- Class of road 
-select
-	first_road_class, 
-	count(*) 
+select first_road_class,
+       count(*)
 from sql.dbo.accident
-group by 
-	first_road_class
-order by 
-	count(*) desc
+group by first_road_class
+order by count(*) desc
 
 -- Road number
-select
-	first_road_number, 
-	first_road_class,
-	count(*) 
+select first_road_number,
+       first_road_class,
+       count(*)
 from sql.dbo.accident
 where first_road_number != 0
-group by 
-	first_road_number, first_road_class
-order by 
-	count(*) desc
+group by first_road_number, first_road_class
+order by count(*) desc
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -317,65 +287,52 @@ order by
 
 -- casualty type for accident severity
 
-select 
-	casualty_type, 
-	count(*), 
-	accident_severity
+select casualty_type,
+       count(*),
+       accident_severity
 from sql.dbo.accident as accident
-    inner join sql.dbo.casualty as cas on
-        accident.accident_index = cas.accident_index
-group by 
-	casualty_type, accident_severity
-order by 
-	count(*) desc;
+         inner join sql.dbo.casualty as cas on
+    accident.accident_index = cas.accident_index
+group by casualty_type, accident_severity
+order by count(*) desc;
 
 -- age band of casualties
 
-select 
-	count(*), 
-	age_band_of_casualty, 
-	casualty_severity, 
-	case casualty.age_band_of_casualty
-		when '1'  then	'0 - 5'
-		when '2'  then	'6 - 10'
-		when '3'  then	'11 - 15'
-		when '4'  then	'16 - 20'
-		when '5'  then	'21 - 25'
-		when '6'  then	'26 - 35'
-		when '7'  then	'36 - 45'
-		when '8'  then	'46 - 55'
-		when '9'  then	'56 - 65'
-		when '10' then  '66 - 75'
-		when '11' then  'Over 75'
-	end as age_group
+select count(*),
+       age_band_of_casualty,
+       casualty_severity,
+       case casualty.age_band_of_casualty
+           when '1' then '0 - 5'
+           when '2' then '6 - 10'
+           when '3' then '11 - 15'
+           when '4' then '16 - 20'
+           when '5' then '21 - 25'
+           when '6' then '26 - 35'
+           when '7' then '36 - 45'
+           when '8' then '46 - 55'
+           when '9' then '56 - 65'
+           when '10' then '66 - 75'
+           when '11' then 'Over 75'
+           end as age_group
 from SQL.dbo.casualty
-where 
-	age_band_of_casualty != -1
-group by 
-	age_band_of_casualty, casualty_severity
-order by 
-	count(*) desc;
+where age_band_of_casualty != -1
+group by age_band_of_casualty, casualty_severity
+order by count(*) desc;
 
 -- vehicle type
 
-select 
-	vehicle_type, 
-	count(*)
+select vehicle_type,
+       count(*)
 from sql.dbo.accident as accident
-    inner join sql.dbo.vehicle as vehicle on
-        accident.accident_index = vehicle.accident_index
-group by 
-	vehicle_type
-order by 
-	count(*) desc;
+         inner join sql.dbo.vehicle as vehicle on
+    accident.accident_index = vehicle.accident_index
+group by vehicle_type
+order by count(*) desc;
 
 -- light conditions
 
-select 
-	light_conditions, 
-	count(*) 
+select light_conditions,
+       count(*)
 from sql.dbo.accident
-group by 
-	light_conditions
-order by 
-	count(*) desc;
+group by light_conditions
+order by count(*) desc;
