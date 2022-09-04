@@ -86,12 +86,12 @@ order by
 -- Percent accident severities per sex (different method)
 
 select 
-cast(male_mild as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_mild as float)) * 100 as male_mild_percent, 
-cast(male_severe as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_mild as float)) * 100 as male_severe_percent,
-cast(male_fatal as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_mild as float)) * 100 as male_fatal_percent, 
-cast(female_mild as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_mild as float)) * 100 as female_mild_percent,
-cast(female_severe as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_mild as float)) * 100 as female_severe_percent,
-cast(female_fatal as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_mild as float)) * 100 as female_fatal_percent
+cast(male_slight as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_slight_percent, 
+cast(male_severe as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_severe_percent,
+cast(male_fatal as float) / (cast(male_fatal as float) + cast(male_severe as float) + cast(male_slight as float)) * 100 as male_fatal_percent, 
+cast(female_slight as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_slight_percent,
+cast(female_severe as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_severe_percent,
+cast(female_fatal as float) / (cast(female_fatal as float) + cast(female_severe as float) + cast(female_slight as float)) * 100 as female_fatal_percent
 
 from (
 	select 
@@ -116,7 +116,7 @@ from (
 		from SQL.dbo.accident as accident
 			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
 		where sex_of_driver = 1 and accident_severity = 3
-	) as male_mild,
+	) as male_slight,
 
 	(
 		select count(*)
@@ -139,7 +139,7 @@ from (
 		from SQL.dbo.accident as accident
 			inner join SQL.dbo.vehicle as vehicle on accident.accident_index = vehicle.accident_index
 		where sex_of_driver = 2 and accident_severity = 3
-	) as female_mild
+	) as female_slight
 ) as percentage_calculations
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -266,7 +266,6 @@ order by
 
 select 
 	speed_limit, 
-	count(*), 
 	accident_severity,
 	count(*) as Total,
     count(*) * 100.0 / sum(count(*)) over (partition by speed_limit) as PercentOfAccidents,
@@ -278,6 +277,40 @@ group by
 	speed_limit, accident_severity
 order by 
 	count(*) desc
+
+-- Road type 
+
+select
+	road_type, 
+	count(*) 
+from sql.dbo.accident
+group by 
+	road_type
+order by 
+	count(*) desc
+
+-- Class of road 
+select
+	first_road_class, 
+	count(*) 
+from sql.dbo.accident
+group by 
+	first_road_class
+order by 
+	count(*) desc
+
+-- Road number
+select
+	first_road_number, 
+	first_road_class,
+	count(*) 
+from sql.dbo.accident
+where first_road_number != 0
+group by 
+	first_road_number, first_road_class
+order by 
+	count(*) desc
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 --Exploring data
